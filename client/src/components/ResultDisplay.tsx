@@ -18,15 +18,15 @@ export default function ResultDisplay({ result, error }: ResultDisplayProps) {
       .writeText(result)
       .then(() => {
         toast({
-          title: "Copied to clipboard!",
-          description: "WKT result has been copied to your clipboard.",
+          title: "已複製到剪貼簿！",
+          description: "WKT 結果已成功複製到您的剪貼簿。",
           variant: "default",
         });
       })
       .catch(() => {
         toast({
-          title: "Failed to copy",
-          description: "Could not copy the text to clipboard.",
+          title: "複製失敗",
+          description: "無法將文字複製到剪貼簿。",
           variant: "destructive",
         });
       });
@@ -35,7 +35,7 @@ export default function ResultDisplay({ result, error }: ResultDisplayProps) {
   return (
     <div className="border-t border-gray-200 dark:border-gray-700 p-6 space-y-4 bg-gray-50 dark:bg-gray-800">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-medium">WKT Result</h2>
+        <h2 className="text-lg font-medium">WKT 結果</h2>
         <Button
           type="button"
           variant="outline"
@@ -45,7 +45,7 @@ export default function ResultDisplay({ result, error }: ResultDisplayProps) {
           disabled={!result}
         >
           <i className="fa-regular fa-copy mr-1.5"></i>
-          Copy
+          複製
         </Button>
       </div>
 
@@ -54,7 +54,7 @@ export default function ResultDisplay({ result, error }: ResultDisplayProps) {
           id="wktResult"
           className="block w-full rounded-md border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white p-4 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200 font-mono text-sm"
           rows={4}
-          placeholder="WKT output will appear here"
+          placeholder="WKT 輸出結果將顯示在此處"
           readOnly
           value={result}
         />

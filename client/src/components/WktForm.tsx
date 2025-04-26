@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { convertToWkt } from "@/lib/utils/wkt";
+import { convertToWkt, type CoordinateFormat } from "@/lib/utils/wkt";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 type WktFormProps = {
   onConvertResult: (result: string, error: string | null) => void;
@@ -15,28 +17,29 @@ export default function WktForm({ onConvertResult, onClear }: WktFormProps) {
   const [coordinates, setCoordinates] = useState("");
   const [conversionMode, setConversionMode] = useState<ConversionMode>("POINT");
   const [coordError, setCoordError] = useState<string | null>(null);
+  const [coordinateFormat, setCoordinateFormat] = useState<CoordinateFormat>("LAT_LONG"); // 預設為緯度,經度格式 (Google Maps 兼容)
+
+  const handleToggleFormat = () => {
+    setCoordinateFormat(prev => prev === "LAT_LONG" ? "LONG_LAT" : "LAT_LONG");
+  };
 
   const handleConvert = (e: React.FormEvent) => {
     e.preventDefault();
     setCoordError(null);
 
     if (!coordinates.trim()) {
-      setCoordError("Please enter coordinates");
+      setCoordError("請輸入座標");
       onConvertResult("", null);
       return;
     }
 
     try {
-      const result = convertToWkt(coordinates, conversionMode);
+      const result = convertToWkt(coordinates, conversionMode, coordinateFormat);
       onConvertResult(result, null);
     } catch (error) {
       if (error instanceof Error) {
-        if (error.message.includes("Invalid coordinate format")) {
-          setCoordError(error.message);
-          onConvertResult("", null);
-        } else {
-          onConvertResult("", error.message);
-        }
+        setCoordError(error.message);
+        onConvertResult("", null);
       }
     }
   };
@@ -47,20 +50,67 @@ export default function WktForm({ onConvertResult, onClear }: WktFormProps) {
     onClear();
   };
 
+  // 取得座標格式說明文字
+  const getFormatExample = () => {
+    if (coordinateFormat === "LAT_LONG") {
+      return "25.037571 121.557846";
+    } else {
+      return "121.557846 25.037571";
+    }
+  };
+
+  // 取得座標格式提示文字
+  const getFormatHelpText = () => {
+    if (coordinateFormat === "LAT_LONG") {
+      return "使用格式：緯度 經度（例如：25.037571 121.557846）";
+    } else {
+      return "使用格式：經度 緯度（例如：121.557846 25.037571）";
+    }
+  };
+
+  const getFormatTooltipText = () => {
+    if (coordinateFormat === "LAT_LONG") {
+      return "格式：緯度 經度（例如：25.037571 121.557846）";
+    } else {
+      return "格式：經度 緯度（例如：121.557846 25.037571）";
+    }
+  };
+
   return (
     <form className="p-6 space-y-6" onSubmit={handleConvert}>
-      {/* Coordinate Input */}
+      {/* 座標格式切換 */}
+      <div className="flex items-center justify-between space-x-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+        <div>
+          <Label htmlFor="format-toggle" className="font-medium text-gray-700 dark:text-gray-300">
+            座標格式
+          </Label>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+            {coordinateFormat === "LAT_LONG" ? "目前：緯度,經度（Google Maps 格式）" : "目前：經度,緯度（國土測繪格式）"}
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className="text-xs text-gray-600 dark:text-gray-400">經度,緯度</span>
+          <Switch 
+            id="format-toggle" 
+            checked={coordinateFormat === "LAT_LONG"}
+            onCheckedChange={handleToggleFormat}
+          />
+          <span className="text-xs text-gray-600 dark:text-gray-400">緯度,經度</span>
+        </div>
+      </div>
+
+      {/* 座標輸入 */}
       <div className="space-y-2">
         <label htmlFor="coordinates" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Geographic Coordinates
+          地理座標
         </label>
         <div className="relative">
           <Textarea
             id="coordinates"
             className="block w-full rounded-md border-gray-300 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white p-4 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
             rows={3}
-            placeholder="Enter coordinates as 'longitude latitude' pairs separated by commas:
-e.g. 120.436610 24.046724, 120.438000 24.048000"
+            placeholder={`輸入座標，每對座標以逗號分隔：
+例如：${getFormatExample()}, ${getFormatExample()}`}
             value={coordinates}
             onChange={(e) => setCoordinates(e.target.value)}
           />
@@ -73,7 +123,7 @@ e.g. 120.436610 24.046724, 120.438000 24.048000"
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Format: longitude latitude (e.g., 120.436610 24.046724)</p>
+                  <p>{getFormatTooltipText()}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -81,7 +131,7 @@ e.g. 120.436610 24.046724, 120.438000 24.048000"
         </div>
         <div className="text-xs text-gray-500 dark:text-gray-400 flex items-start">
           <i className="fa-solid fa-info-circle mt-0.5 mr-1"></i>
-          <span>Use format: longitude latitude (e.g., 120.436610 24.046724)</span>
+          <span>{getFormatHelpText()}</span>
         </div>
         {coordError && (
           <div className="text-xs text-red-500">
@@ -91,10 +141,10 @@ e.g. 120.436610 24.046724, 120.438000 24.048000"
         )}
       </div>
 
-      {/* Conversion Mode */}
+      {/* 轉換模式 */}
       <div className="space-y-3">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Conversion Mode
+          轉換模式
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* POINT */}
@@ -118,8 +168,8 @@ e.g. 120.436610 24.046724, 120.438000 24.048000"
                 <div className={`w-3 h-3 rounded-full bg-white ${conversionMode === "POINT" ? "block" : "hidden"}`}></div>
               </div>
               <div>
-                <p className="font-medium">Single Point (POINT)</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Each coordinate as separate POINT</p>
+                <p className="font-medium">單點 (POINT)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">每個座標作為單獨的 POINT</p>
               </div>
             </label>
           </div>
@@ -145,8 +195,8 @@ e.g. 120.436610 24.046724, 120.438000 24.048000"
                 <div className={`w-3 h-3 rounded-full bg-white ${conversionMode === "MULTIPOINT" ? "block" : "hidden"}`}></div>
               </div>
               <div>
-                <p className="font-medium">Multiple Points (MULTIPOINT)</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">All coordinates as one MULTIPOINT</p>
+                <p className="font-medium">多點 (MULTIPOINT)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">所有座標作為一個 MULTIPOINT</p>
               </div>
             </label>
           </div>
@@ -172,8 +222,8 @@ e.g. 120.436610 24.046724, 120.438000 24.048000"
                 <div className={`w-3 h-3 rounded-full bg-white ${conversionMode === "LINESTRING" ? "block" : "hidden"}`}></div>
               </div>
               <div>
-                <p className="font-medium">Line String (LINESTRING)</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Connected line through all points</p>
+                <p className="font-medium">線段 (LINESTRING)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">所有點連成一條線</p>
               </div>
             </label>
           </div>
@@ -199,22 +249,22 @@ e.g. 120.436610 24.046724, 120.438000 24.048000"
                 <div className={`w-3 h-3 rounded-full bg-white ${conversionMode === "POLYGON" ? "block" : "hidden"}`}></div>
               </div>
               <div>
-                <p className="font-medium">Polygon (POLYGON)</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Closed area (first/last points must match)</p>
+                <p className="font-medium">多邊形 (POLYGON)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">封閉區域（首尾點必須相同）</p>
               </div>
             </label>
           </div>
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* 動作按鈕 */}
       <div className="flex flex-col sm:flex-row gap-3">
         <Button
           type="submit"
           className="flex-1 rounded-md bg-blue-550 px-4 py-2.5 font-medium text-white shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 flex items-center justify-center"
         >
           <i className="fa-solid fa-arrows-rotate mr-2"></i>
-          Convert to WKT
+          轉換成 WKT
         </Button>
 
         <Button
@@ -224,7 +274,7 @@ e.g. 120.436610 24.046724, 120.438000 24.048000"
           onClick={handleClear}
         >
           <i className="fa-solid fa-xmark mr-2"></i>
-          Clear All
+          清除全部
         </Button>
       </div>
     </form>
