@@ -19,10 +19,18 @@ export function parseCoordinates(input: string, format: CoordinateFormat = "LONG
   
   // 處理每一行
   for (const line of lines) {
-    // 檢查該行是否包含逗號分隔的多個點 (e.g. "25.1234,121.5678, 25.1235,121.5679")
-    const pointPairs = line.includes(',') ? 
-      line.split(/\s*,\s*/).filter(p => p) :  // 如果有逗號，按逗號分割
-      [line];  // 如果沒有逗號，整行視為一個點
+    // 處理多種格式的情況
+    let pointPairs: string[] = [];
+    
+    // 檢查該行是否有 "數值,數值" 的格式 (單對座標)，例如 "25.037571,121.557846"
+    if (line.match(/^[\d.-]+,[\d.-]+$/)) {
+      // 這是單一座標對，直接處理
+      pointPairs = [line];
+    } else {
+      // 可能是多個點以逗號分隔，如 "25.1234 121.5678, 25.1235 121.5679" 
+      // 或多個以逗號分隔的點對 "25.1234,121.5678, 25.1235,121.5679"
+      pointPairs = line.split(/\s*,\s*/).filter(p => p);
+    }
     
     for (const pointPair of pointPairs) {
       let value1: number, value2: number;
