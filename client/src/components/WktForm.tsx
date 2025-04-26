@@ -62,17 +62,17 @@ export default function WktForm({ onConvertResult, onClear }: WktFormProps) {
   // 取得座標格式提示文字
   const getFormatHelpText = () => {
     if (coordinateFormat === "LAT_LONG") {
-      return "使用格式：緯度 經度（例如：25.037571 121.557846）";
+      return "支援多種格式：緯度 經度（例如：25.037571 121.557846）或緯度,經度（例如：25.037571,121.557846）";
     } else {
-      return "使用格式：經度 緯度（例如：121.557846 25.037571）";
+      return "支援多種格式：經度 緯度（例如：121.557846 25.037571）或經度,緯度（例如：121.557846,25.037571）";
     }
   };
 
   const getFormatTooltipText = () => {
     if (coordinateFormat === "LAT_LONG") {
-      return "格式：緯度 經度（例如：25.037571 121.557846）";
+      return "多點輸入格式：\n1. 用逗號分隔多個點：25.037571 121.557846, 25.040000 121.560000\n2. 用換行分隔多個點：\n25.037571 121.557846\n25.040000 121.560000\n3. 經緯度之間可用空格或逗號：25.037571,121.557846";
     } else {
-      return "格式：經度 緯度（例如：121.557846 25.037571）";
+      return "多點輸入格式：\n1. 用逗號分隔多個點：121.557846 25.037571, 121.560000 25.040000\n2. 用換行分隔多個點：\n121.557846 25.037571\n121.560000 25.040000\n3. 經緯度之間可用空格或逗號：121.557846,25.037571";
     }
   };
 
@@ -108,9 +108,12 @@ export default function WktForm({ onConvertResult, onClear }: WktFormProps) {
           <Textarea
             id="coordinates"
             className="block w-full rounded-md border-gray-300 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white p-4 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
-            rows={3}
-            placeholder={`輸入座標，每對座標以逗號分隔：
-例如：${getFormatExample()}, ${getFormatExample()}`}
+            rows={4}
+            placeholder={`輸入座標，可以用逗號或換行分隔多個點：
+方式1：${getFormatExample()}, ${getFormatExample()}
+方式2：
+${getFormatExample()}
+${getFormatExample()}`}
             value={coordinates}
             onChange={(e) => setCoordinates(e.target.value)}
           />

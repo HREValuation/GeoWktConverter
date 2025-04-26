@@ -4,54 +4,76 @@ export type CoordinateFormat = "LONG_LAT" | "LAT_LONG"; // 座標格式: 經度,
 
 /**
  * Parse coordinates from input string
- * @param input Coordinates as string in format "lon1 lat1, lon2 lat2, ..." or "lat1 lon1, lat2 lon2, ..."
+ * @param input Coordinates in multiple formats:
+ *  - "25.037571 121.557846" (空格分隔的一對座標)
+ *  - "25.037571,121.557846" (逗號分隔的一對座標)
+ *  - 多點可以用逗號或換行分隔
  * @param format Coordinate format (LONG_LAT or LAT_LONG)
  * @returns Array of coordinate pairs or null if invalid
  */
 export function parseCoordinates(input: string, format: CoordinateFormat = "LONG_LAT"): Coordinate[] {
   const coordinates: Coordinate[] = [];
   
-  // Split by commas or newlines
-  const parts = input.split(/,|\n/).map(part => part.trim()).filter(part => part);
+  // 先將輸入按換行符分割成多行
+  const lines = input.split(/\n/).map(line => line.trim()).filter(line => line);
   
-  for (const part of parts) {
-    // Extract values
-    const coords = part.split(/\s+/);
-    if (coords.length !== 2) {
-      throw new Error("座標格式無效。請使用 '數值1 數值2' 的格式表示每個點。");
+  // 處理每一行
+  for (const line of lines) {
+    // 檢查該行是否包含逗號分隔的多個點 (e.g. "25.1234,121.5678, 25.1235,121.5679")
+    const pointPairs = line.includes(',') ? 
+      line.split(/\s*,\s*/).filter(p => p) :  // 如果有逗號，按逗號分割
+      [line];  // 如果沒有逗號，整行視為一個點
+    
+    for (const pointPair of pointPairs) {
+      let value1: number, value2: number;
+      
+      // 嘗試解析座標對
+      if (pointPair.includes(',')) {
+        // 如果座標對內有逗號 (e.g. "25.1234,121.5678")
+        const parts = pointPair.split(',').map(p => p.trim());
+        if (parts.length !== 2) {
+          throw new Error(`座標格式無效: "${pointPair}"。應為 "數值1,數值2" 或 "數值1 數值2"`);
+        }
+        value1 = parseFloat(parts[0]);
+        value2 = parseFloat(parts[1]);
+      } else {
+        // 如果座標對內用空格分隔 (e.g. "25.1234 121.5678")
+        const parts = pointPair.split(/\s+/);
+        if (parts.length !== 2) {
+          throw new Error(`座標格式無效: "${pointPair}"。應為 "數值1,數值2" 或 "數值1 數值2"`);
+        }
+        value1 = parseFloat(parts[0]);
+        value2 = parseFloat(parts[1]);
+      }
+      
+      // 驗證座標值是否為數字
+      if (isNaN(value1) || isNaN(value2)) {
+        throw new Error("座標必須是數值。");
+      }
+      
+      // 根據格式確定哪個是經度哪個是緯度
+      let lon: number, lat: number;
+      
+      if (format === "LONG_LAT") {
+        lon = value1;
+        lat = value2;
+      } else { // LAT_LONG
+        lat = value1;
+        lon = value2;
+      }
+      
+      // 驗證座標範圍
+      if (lon < -180 || lon > 180) {
+        throw new Error(`經度 ${lon} 超出範圍。經度必須在 -180 到 180 之間。`);
+      }
+      
+      if (lat < -90 || lat > 90) {
+        throw new Error(`緯度 ${lat} 超出範圍。緯度必須在 -90 到 90 之間。`);
+      }
+      
+      // 符合 WKT 標準的儲存格式 [longitude, latitude]
+      coordinates.push([lon, lat]);
     }
-    
-    // Parse as numbers
-    const value1 = parseFloat(coords[0]);
-    const value2 = parseFloat(coords[1]);
-    
-    // Validate numeric values
-    if (isNaN(value1) || isNaN(value2)) {
-      throw new Error("座標必須是數值。");
-    }
-    
-    // Determine which is longitude and which is latitude based on format
-    let lon: number, lat: number;
-    
-    if (format === "LONG_LAT") {
-      lon = value1;
-      lat = value2;
-    } else { // LAT_LONG
-      lat = value1;
-      lon = value2;
-    }
-    
-    // Validate coordinate ranges
-    if (lon < -180 || lon > 180) {
-      throw new Error("經度超出範圍。經度必須在 -180 到 180 之間。");
-    }
-    
-    if (lat < -90 || lat > 90) {
-      throw new Error("緯度超出範圍。緯度必須在 -90 到 90 之間。");
-    }
-    
-    // Always store as [longitude, latitude] for WKT standards
-    coordinates.push([lon, lat]);
   }
   
   if (coordinates.length === 0) {
@@ -86,7 +108,7 @@ function formatAsMultipoint(coordinates: Coordinate[]): string {
  */
 function formatAsLinestring(coordinates: Coordinate[]): string {
   if (coordinates.length < 2) {
-    throw new Error("LINESTRING requires at least 2 points.");
+    throw new Error("線段（LINESTRING）需要至少 2 個點。");
   }
   
   const pointsString = coordinates.map(coord => {
