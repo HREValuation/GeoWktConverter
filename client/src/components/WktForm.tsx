@@ -264,10 +264,11 @@ ${getFormatExample()}`}
       <div className="flex flex-col sm:flex-row gap-3">
         <Button
           type="submit"
-          className="flex-1 rounded-md bg-blue-550 px-4 py-2.5 font-medium text-white dark:text-white shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 flex items-center justify-center"
+          variant="default"
+          className="flex-1 rounded-md bg-blue-600 px-4 py-2.5 font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 flex items-center justify-center"
         >
           <i className="fa-solid fa-arrows-rotate mr-2"></i>
-          轉換成 WKT
+          <span className="text-white">轉換成 WKT</span>
         </Button>
 
         <Button
