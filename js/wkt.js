@@ -1,18 +1,26 @@
-type Coordinate = [number, number]; // [longitude, latitude]
-type ConversionMode = "POINT" | "MULTIPOINT" | "LINESTRING" | "POLYGON";
-export type CoordinateFormat = "LONG_LAT" | "LAT_LONG"; // 座標格式: 經度,緯度 或 緯度,經度
+/**
+ * 座標類型定義
+ * @typedef {[number, number]} Coordinate - [longitude, latitude]
+ */
 
 /**
- * Parse coordinates from input string
- * @param input Coordinates in multiple formats:
- *  - "25.037571 121.557846" (空格分隔的一對座標)
- *  - "25.037571,121.557846" (逗號分隔的一對座標)
- *  - 多點可以用逗號或換行分隔
- * @param format Coordinate format (LONG_LAT or LAT_LONG)
- * @returns Array of coordinate pairs or null if invalid
+ * 轉換模式類型定義
+ * @typedef {'POINT' | 'MULTIPOINT' | 'LINESTRING' | 'POLYGON'} ConversionMode
  */
-export function parseCoordinates(input: string, format: CoordinateFormat = "LONG_LAT"): Coordinate[] {
-  const coordinates: Coordinate[] = [];
+
+/**
+ * 座標格式類型定義
+ * @typedef {'LONG_LAT' | 'LAT_LONG'} CoordinateFormat - 經度,緯度 或 緯度,經度
+ */
+
+/**
+ * 解析座標字串
+ * @param {string} input - 座標輸入字串
+ * @param {CoordinateFormat} format - 座標格式 (LONG_LAT 或 LAT_LONG)
+ * @returns {Coordinate[]} - 解析後的座標陣列
+ */
+function parseCoordinates(input, format = 'LAT_LONG') {
+  const coordinates = [];
   
   // 先將輸入按換行符分割成多行
   const lines = input.split(/\n/).map(line => line.trim()).filter(line => line);
@@ -20,7 +28,7 @@ export function parseCoordinates(input: string, format: CoordinateFormat = "LONG
   // 處理每一行
   for (const line of lines) {
     // 處理多種格式的情況
-    let pointPairs: string[] = [];
+    let pointPairs = [];
     
     // 檢查該行是否有 "數值,數值" 的格式 (單對座標)，例如 "25.037571,121.557846"
     if (line.match(/^[\d.-]+,[\d.-]+$/)) {
@@ -33,7 +41,7 @@ export function parseCoordinates(input: string, format: CoordinateFormat = "LONG
     }
     
     for (const pointPair of pointPairs) {
-      let value1: number, value2: number;
+      let value1, value2;
       
       // 嘗試解析座標對
       if (pointPair.includes(',')) {
@@ -60,9 +68,9 @@ export function parseCoordinates(input: string, format: CoordinateFormat = "LONG
       }
       
       // 根據格式確定哪個是經度哪個是緯度
-      let lon: number, lat: number;
+      let lon, lat;
       
-      if (format === "LONG_LAT") {
+      if (format === 'LONG_LAT') {
         lon = value1;
         lat = value2;
       } else { // LAT_LONG
@@ -92,18 +100,22 @@ export function parseCoordinates(input: string, format: CoordinateFormat = "LONG
 }
 
 /**
- * Format coordinates as POINT
+ * 將座標格式化為 POINT
+ * @param {Coordinate[]} coordinates - 座標陣列
+ * @returns {string} - WKT 格式字串
  */
-function formatAsPoints(coordinates: Coordinate[]): string {
+function formatAsPoints(coordinates) {
   return coordinates.map(coord => {
     return `POINT (${coord[0]} ${coord[1]})`;
   }).join('\n');
 }
 
 /**
- * Format coordinates as MULTIPOINT
+ * 將座標格式化為 MULTIPOINT
+ * @param {Coordinate[]} coordinates - 座標陣列
+ * @returns {string} - WKT 格式字串
  */
-function formatAsMultipoint(coordinates: Coordinate[]): string {
+function formatAsMultipoint(coordinates) {
   const pointsString = coordinates.map(coord => {
     return `(${coord[0]} ${coord[1]})`;
   }).join(', ');
@@ -112,9 +124,11 @@ function formatAsMultipoint(coordinates: Coordinate[]): string {
 }
 
 /**
- * Format coordinates as LINESTRING
+ * 將座標格式化為 LINESTRING
+ * @param {Coordinate[]} coordinates - 座標陣列
+ * @returns {string} - WKT 格式字串
  */
-function formatAsLinestring(coordinates: Coordinate[]): string {
+function formatAsLinestring(coordinates) {
   if (coordinates.length < 2) {
     throw new Error("線段（LINESTRING）需要至少 2 個點。");
   }
@@ -127,14 +141,16 @@ function formatAsLinestring(coordinates: Coordinate[]): string {
 }
 
 /**
- * Format coordinates as POLYGON
+ * 將座標格式化為 POLYGON
+ * @param {Coordinate[]} coordinates - 座標陣列
+ * @returns {string} - WKT 格式字串
  */
-function formatAsPolygon(coordinates: Coordinate[]): string {
+function formatAsPolygon(coordinates) {
   if (coordinates.length < 3) {
     throw new Error("多邊形（POLYGON）需要至少 3 個點。");
   }
   
-  // Check if first and last points match
+  // 檢查首尾點是否相同
   const firstPoint = coordinates[0];
   const lastPoint = coordinates[coordinates.length - 1];
   
@@ -150,27 +166,23 @@ function formatAsPolygon(coordinates: Coordinate[]): string {
 }
 
 /**
- * Convert coordinates to WKT based on selected mode and format
- * @param coordinatesInput Input string with coordinates
- * @param mode WKT conversion mode
- * @param format Format of coordinates (LAT_LONG or LONG_LAT)
- * @returns WKT formatted string
+ * 將座標轉換為 WKT 格式
+ * @param {string} coordinatesInput - 座標輸入字串
+ * @param {ConversionMode} mode - 轉換模式
+ * @param {CoordinateFormat} format - 座標格式 (LAT_LONG 或 LONG_LAT)
+ * @returns {string} - WKT 格式字串
  */
-export function convertToWkt(
-  coordinatesInput: string, 
-  mode: ConversionMode,
-  format: CoordinateFormat = "LAT_LONG" // 預設為緯度,經度格式 (Google Maps 兼容)
-): string {
+function convertToWkt(coordinatesInput, mode, format = 'LAT_LONG') {
   const coordinates = parseCoordinates(coordinatesInput, format);
   
   switch (mode) {
-    case "POINT":
+    case 'POINT':
       return formatAsPoints(coordinates);
-    case "MULTIPOINT":
+    case 'MULTIPOINT':
       return formatAsMultipoint(coordinates);
-    case "LINESTRING":
+    case 'LINESTRING':
       return formatAsLinestring(coordinates);
-    case "POLYGON":
+    case 'POLYGON':
       return formatAsPolygon(coordinates);
     default:
       throw new Error("無效的轉換模式");

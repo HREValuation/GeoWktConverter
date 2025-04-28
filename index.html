@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>座標轉 WKT 工具</title>
+  <meta name="description" content="將地理座標轉換為 WKT (Well-Known Text) 格式的網頁工具，支援多種座標格式與地理圖形類型。">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 主題切換按鈕 (右上角) -->
+  <div class="theme-toggle-fixed">
+    <button id="theme-toggle-btn" aria-label="切換主題">
+      <i class="fas fa-moon dark-icon"></i>
+      <i class="fas fa-sun light-icon"></i>
+    </button>
+  </div>
+
+  <div class="container">
+    <!-- 頁頭 -->
+    <header class="header">
+      <h1>座標轉 WKT 工具</h1>
+      <p class="subtitle">將地理座標轉換為 Well-Known Text 格式</p>
+    </header>
+
+    <!-- 主要內容 -->
+    <main class="main-content">
+      <form id="wkt-form" class="wkt-form">
+        <!-- 座標格式切換 -->
+        <div class="format-toggle">
+          <div>
+            <label class="format-label">座標格式</label>
+            <p class="format-desc" id="format-desc">目前：緯度,經度（Google Maps 格式）</p>
+          </div>
+          <div class="toggle-container">
+            <span class="toggle-label">經度,緯度</span>
+            <label class="switch">
+              <input type="checkbox" id="format-toggle" checked>
+              <span class="slider round"></span>
+            </label>
+            <span class="toggle-label">緯度,經度</span>
+          </div>
+        </div>
+
+        <!-- 座標輸入 -->
+        <div class="input-group">
+          <label for="coordinates">輸入座標</label>
+          <textarea 
+            id="coordinates" 
+            placeholder="輸入座標，例如：25.037571 121.557846"
+            rows="5"
+          ></textarea>
+          <p class="help-text" id="format-help">支援多種格式：緯度 經度（例如：25.037571 121.557846）或緯度,經度（例如：25.037571,121.557846）</p>
+        </div>
+
+        <!-- 轉換模式選擇 -->
+        <div class="conversion-mode">
+          <label>轉換模式</label>
+          <div class="radio-group">
+            <!-- POINT -->
+            <div class="radio-option">
+              <input type="radio" id="point" name="conversionMode" value="POINT" checked>
+              <label for="point">
+                <span class="radio-title">點 (POINT)</span>
+                <span class="radio-desc">每個座標作為單獨的點</span>
+              </label>
+            </div>
+
+            <!-- MULTIPOINT -->
+            <div class="radio-option">
+              <input type="radio" id="multipoint" name="conversionMode" value="MULTIPOINT">
+              <label for="multipoint">
+                <span class="radio-title">多點 (MULTIPOINT)</span>
+                <span class="radio-desc">所有座標作為一個 MULTIPOINT</span>
+              </label>
+            </div>
+
+            <!-- LINESTRING -->
+            <div class="radio-option">
+              <input type="radio" id="linestring" name="conversionMode" value="LINESTRING">
+              <label for="linestring">
+                <span class="radio-title">線段 (LINESTRING)</span>
+                <span class="radio-desc">所有點連成一條線</span>
+              </label>
+            </div>
+
+            <!-- POLYGON -->
+            <div class="radio-option">
+              <input type="radio" id="polygon" name="conversionMode" value="POLYGON">
+              <label for="polygon">
+                <span class="radio-title">多邊形 (POLYGON)</span>
+                <span class="radio-desc">封閉區域（首尾點必須相同）</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 動作按鈕 -->
+        <div class="action-buttons">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-arrows-rotate"></i>
+            轉換成 WKT
+          </button>
+          <button type="button" class="btn btn-secondary" id="clear-btn">
+            <i class="fas fa-xmark"></i>
+            清除全部
+          </button>
+        </div>
+      </form>
+
+      <!-- 結果顯示 -->
+      <div class="result-container" id="result-container">
+        <div class="result-header">
+          <h2>轉換結果</h2>
+          <button class="btn btn-icon" id="copy-btn" title="複製到剪貼簿">
+            <i class="fas fa-copy"></i>
+          </button>
+        </div>
+        <div class="result-content">
+          <pre id="result-text"></pre>
+          <div id="error-message" class="error-message"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 範例部分 -->
+    <section class="examples">
+      <h2>常見範例</h2>
+      <div class="example-grid">
+        <div class="example-card">
+          <h3>單一點 (POINT)</h3>
+          <p>輸入：<code>25.037571 121.557846</code></p>
+          <p>結果：<code>POINT (121.557846 25.037571)</code></p>
+        </div>
+        <div class="example-card">
+          <h3>多點 (MULTIPOINT)</h3>
+          <p>輸入：<code>25.037571 121.557846, 25.040000 121.560000</code></p>
+          <p>結果：<code>MULTIPOINT ((121.557846 25.037571), (121.560000 25.040000))</code></p>
+        </div>
+        <div class="example-card">
+          <h3>線段 (LINESTRING)</h3>
+          <p>輸入：<code>25.037571 121.557846, 25.040000 121.560000, 25.042000 121.562000</code></p>
+          <p>結果：<code>LINESTRING (121.557846 25.037571, 121.560000 25.040000, 121.562000 25.042000)</code></p>
+        </div>
+        <div class="example-card">
+          <h3>多邊形 (POLYGON)</h3>
+          <p>輸入：<code>25.037571 121.557846, 25.040000 121.560000, 25.042000 121.562000, 25.037571 121.557846</code></p>
+          <p>結果：<code>POLYGON ((121.557846 25.037571, 121.560000 25.040000, 121.562000 25.042000, 121.557846 25.037571))</code></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 頁尾 -->
+    <footer class="footer">
+      <p>© <span id="current-year"></span> 座標轉 WKT 工具 | <span class="highlight">實用工具</span></p>
+    </footer>
+  </div>
+
+  <script src="js/wkt.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
