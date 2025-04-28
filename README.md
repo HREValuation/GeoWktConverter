@@ -17,7 +17,9 @@
 
 ## 線上演示
 
-[在線體驗 GeoWktConverter](https://您的部署網址)
+[在線體驗 GeoWktConverter](https://hrewkt.zeabur.app/)
+或
+[在線體驗 GeoWktConverter](https://wkt.hre-tools.com)
 
 ## 本地開發
 
@@ -31,3 +33,30 @@ npm run dev
 
 # 建置生產版本
 npm run build
+```
+
+## 部署
+
+本專案為靜態網站，可輕鬆部署於 Netlify、Vercel、GitHub Pages 或 Zeabur 等平台。
+
+### Netlify 部署
+
+1. 在 Netlify 建立新專案
+2. 連接 GitHub 儲存庫
+3. 部署設定：
+   - 基礎目錄：`client`
+   - 建置命令：`npm run build`
+   - 發布目錄：`dist`
+
+### Zeabur 部署
+
+1. 在 Zeabur 建立新專案
+2. 連接 GitHub 儲存庫
+3. 部署設定：
+   - 工作目錄：`client`
+   - 建置命令：`npm run build`
+   - 輸出目錄：`dist`
+
+## 授權
+
+MITnpm run build
